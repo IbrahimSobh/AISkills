@@ -24,3 +24,7 @@ cp -r fact-checker ~/.claude/skills/
 ```
 
 Then ask Claude to "fact-check" some text, or invoke a skill directly by its name, for example `/fact-checker` or `/tweet-post`.
+
+## License
+
+[MIT](LICENSE) © Ibrahim Sobh
