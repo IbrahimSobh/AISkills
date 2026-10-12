@@ -1,6 +1,6 @@
 ---
 name: content-mermaid
-description: Create and style Mermaid diagrams (flowcharts, sequence diagrams, state diagrams, ER diagrams, class diagrams, Gantt charts, mindmaps, timelines) for technical processes, workflows, architectures, and system flows. Use whenever Ibrahim asks for a "mermaid diagram," "flowchart," "sequence diagram," "state machine," or wants to visualize a software/technical process (agile workflow, CI/CD pipeline, git workflow, data model, architecture, API flow) as a diagram meant to render natively in a Mermaid-aware surface — chat canvas, GitHub/GitLab README, Notion, Obsidian, docs sites. Also trigger to fix, restyle, recolor, or improve readability of an existing Mermaid diagram. Mermaid computes node sizing, arrow routing, and text wrapping itself, so this skips content-diagrams' hand-coded-SVG verification (render-crop-check, cairosvg, manual geometry). If the deliverable must be a standalone image file for a platform that can't render Mermaid (LinkedIn/X post, raster cover), use content-diagrams instead.
+description: Create and style Mermaid diagrams (flowcharts, sequence diagrams, state diagrams, ER diagrams, class diagrams, Gantt charts, mindmaps, timelines) for technical processes, workflows, architectures, and system flows. Use whenever the user asks for a "mermaid diagram," "flowchart," "sequence diagram," "state machine," or wants to visualize a software/technical process (agile workflow, CI/CD pipeline, git workflow, data model, architecture, API flow) as a diagram meant to render natively in a Mermaid-aware surface — chat canvas, GitHub/GitLab README, Notion, Obsidian, docs sites. Also trigger to fix, restyle, recolor, or improve readability of an existing Mermaid diagram. Mermaid computes node sizing, arrow routing, and text wrapping itself, so this skips content-diagrams' hand-coded-SVG verification (render-crop-check, cairosvg, manual geometry). If the deliverable must be a standalone image file for a platform that can't render Mermaid (LinkedIn/X post, raster cover), use content-diagrams instead.
 ---
 
 # Content Mermaid
@@ -47,7 +47,7 @@ Don't default to `flowchart` for everything — a request like "diagram how our 
 
 This is the one place manual verification still matters, because Mermaid will happily render illegible color choices without complaint.
 
-**The rule: every `classDef` must pair a fill with a text color that's been deliberately chosen to contrast with it — never leave `color` unset and hope the theme's default works.** Mermaid's own default palette (soft green/pink/blue with black text) is fine precisely because fill and text were chosen together; the moment you override `fill` to something more saturated or dark, you must also set `color` explicitly, or you'll reproduce the exact defect Ibrahim flagged: readable-looking boxes with text that's actually low-contrast against them.
+**The rule: every `classDef` must pair a fill with a text color that's been deliberately chosen to contrast with it — never leave `color` unset and hope the theme's default works.** Mermaid's own default palette (soft green/pink/blue with black text) is fine precisely because fill and text were chosen together; the moment you override `fill` to something more saturated or dark, you must also set `color` explicitly, or you'll reproduce a common defect: readable-looking boxes with text that's actually low-contrast against them.
 
 Two palette recipes, pick one and use it consistently across every class in one diagram (don't mix):
 
@@ -95,11 +95,11 @@ Use `subgraph` to cluster related steps (e.g., everything inside one sprint, one
 ## Workflow
 
 1. **Identify the underlying structure** and pick the diagram type from the table above before writing any syntax.
-2. **Assign category colors** to the roles present (inputs, process steps, decisions, outputs, feedback) — sketch this out in a sentence or two before writing classDefs, same as content-diagrams' "sketch the motif reasoning" step, so the choice is auditable if Ibrahim wants to adjust one piece.
+2. **Assign category colors** to the roles present (inputs, process steps, decisions, outputs, feedback) — sketch this out in a sentence or two before writing classDefs, same as content-diagrams' "sketch the motif reasoning" step, so the choice is auditable if the user wants to adjust one piece.
 3. **Write the diagram**, starting with the `%%{init: ...}%%` directive, then structure, then `classDef`/`class` assignments (or themeVariables for types that don't support per-node classes).
 4. **Self-check the syntax** — every node ID used in an edge is defined somewhere; every `classDef` has both `fill` and `color` set; brackets/quotes are balanced; no paragraph-length label. No rendering, no screenshotting.
 5. **Save as a `.mermaid` file** via `create_file` so it renders inline as an artifact, using a descriptive slug: `/mnt/user-data/outputs/<slug>.mermaid`. Present with `present_files`.
-6. If Ibrahim needs the diagram as a portable static image (for embedding somewhere that won't render Mermaid, or for archival), say so plainly: this environment doesn't reliably run headless Mermaid-to-image export (it depends on a Chromium download that the sandboxed network usually can't reach). Point to mermaid.live for a manual export, or switch to `content-diagrams` if the real requirement is a standalone graphic.
+6. If the user needs the diagram as a portable static image (for embedding somewhere that won't render Mermaid, or for archival), say so plainly: this environment doesn't reliably run headless Mermaid-to-image export (it depends on a Chromium download that the sandboxed network usually can't reach). Point to mermaid.live for a manual export, or switch to `content-diagrams` if the real requirement is a standalone graphic.
 
 ## What not to do
 

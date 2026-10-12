@@ -1,15 +1,15 @@
 ---
 name: tweet-post
-description: Write a tweet / X post about any kind of technical content — something Ibrahim built (a skill, tool, CLI, project), a research paper or finding, a technical insight, or a project update. Use whenever he asks for a "tweet", "tweet-like post", "X post", or to "post this on Twitter/X," in English or Arabic — even if he gives a different word/character limit. Also trigger when he pastes a SKILL.md, README, paper abstract, or technical write-up and asks to "tweet about it" or "announce it on X." Do NOT use for LinkedIn posts or any longer-form social post (LinkedIn has a different pacing and no hashtag/word-count contract — ask him what he wants instead of reusing this skill's constraints) or for long-form technical explainers (use technical-article-writer instead). This skill is specifically for a single tweet-length X post, on any technical subject matter.
+description: Write a tweet / X post about any kind of technical content — something the user built (a skill, tool, CLI, project), a research paper or finding, a technical insight, or a project update. Use whenever the user asks for a "tweet", "tweet-like post", "X post", or to "post this on Twitter/X," in English or Arabic — even if the user gives a different word/character limit. Also trigger when the user pastes a SKILL.md, README, paper abstract, or technical write-up and asks to "tweet about it" or "announce it on X." Do NOT use for LinkedIn posts or any longer-form social post (LinkedIn has a different pacing and no hashtag/word-count contract — ask the user what they want instead of reusing this skill's constraints) or for long-form technical explainers (use technical-article-writer instead). This skill is specifically for a single tweet-length X post, on any technical subject matter.
 ---
 
 # Tweet Post
 
 ## Overview
 
-Ibrahim wants tweet-length technical posts written as a personal engineering
+The user wants tweet-length technical posts written as a personal engineering
 narrative compressed to X-post size, not marketing copy and not a generic listy
-summary. This applies whatever the subject is — something he built, a research
+summary. This applies whatever the subject is — something the user built, a research
 paper or finding, a technical insight — the compression discipline and
 narrative arc are the same regardless of content type; only the voice changes
 (see Voice, below). The single biggest failure mode is treating "tweet-like" as
@@ -19,10 +19,10 @@ it's just all of that packed into ~110 words instead of a paragraph each. The
 whole point of this skill is to hit that density without collapsing into a bare
 feature list.
 
-This skill is scoped to X/Twitter only. If Ibrahim asks for a LinkedIn post or
+This skill is scoped to X/Twitter only. If the user asks for a LinkedIn post or
 something longer, that's a different pacing and structure (more room per beat,
 no hashtag convention) — don't force this skill's word cap or hashtags onto it;
-ask what length/platform he actually wants.
+ask what length/platform the user actually wants.
 
 ## The structure
 
@@ -32,7 +32,7 @@ Every post follows this shape, in order:
    the *field*, not the specific thing built. The reader should recognize the pain
    before they know a solution exists. Never open by describing the artifact.
 2. **Turn** — one sentence pivoting from problem to reveal: "To address this,
-   here's X" when Ibrahim built the thing, or "A recent paper/team addresses
+   here's X" when the user built the thing, or "A recent paper/team addresses
    this by X" when the post covers someone else's work. Either way this is the
    bridge from problem to solution — lead with the artifact or finding, not a
    first-person construction verb.
@@ -40,7 +40,7 @@ Every post follows this shape, in order:
    that matches who did the work (see Voice, below). Bullets or emoji markers
    are fine here for scannability (pick emoji that match the content, not
    generic decoration) — keep each line terse.
-4. **Reasoning** — state at least one explicit design decision (if Ibrahim built
+4. **Reasoning** — state at least one explicit design decision (if the user built
    it) or one notable methodological choice / implication (if it's someone
    else's work), and the thinking behind it — e.g., "One principle I
    intentionally included is..." or "What's notable is that the authors chose
@@ -58,18 +58,18 @@ Every post follows this shape, in order:
 Voice depends on whose work the post describes — this is the one thing that
 changes across content types, everything else in the structure stays fixed.
 
-- **If Ibrahim built the thing**: first person for the substance and reasoning
-  sections ("I designed," "I included") — this is him announcing something he
-  made, not third-party marketing copy describing a product. The one exception
+- **If the user built the thing**: first person for the substance and reasoning
+  sections ("I designed," "I included") — this is the user announcing something
+  they made, not third-party marketing copy describing a product. The one exception
   is the Turn/bridge sentence itself, which uses "Here's X" rather than "I
   built X" — everything downstream of that bridge stays in first-person
   ownership voice.
 - **If the post covers someone else's work** — a research paper, a lab's
   finding, a third party's project — attribution stays third person throughout
   the substance and reasoning sections: `researchers at X`, `the paper's
-  authors`, `Anthropic's team`, never "I" as if Ibrahim did the work. The only
-  first-person voice allowed here is a short reflection if Ibrahim wants to add
-  his own take — and it must read clearly as commentary *on* the work, not a
+  authors`, `Anthropic's team`, never "I" as if the user did the work. The only
+  first-person voice allowed here is a short reflection if the user wants to add
+  their own take — and it must read clearly as commentary *on* the work, not a
   claim of authorship over it.
 - Exception within the Reasoning section: when stating a hard design
   constraint (something made mandatory/non-optional/required), phrase the
@@ -78,18 +78,18 @@ changes across content types, everything else in the structure stays fixed.
   stays in whatever voice fits naturally. E.g. "Checkpoints are made
   non-optional on purpose — a step an agent can skip, it eventually skips
   exactly when it matters."
-- No warm-up phrases, no hedging — consistent with his general style. But this is
+- No warm-up phrases, no hedging — consistent with the user's general style. But this is
   one context where a reflective, slightly philosophical tone is *wanted*, unlike
-  his terser preference for direct technical answers elsewhere.
-- Emoji-as-bullet-markers are acceptable here for scannability, even though his
+  the user's terser preference for direct technical answers elsewhere.
+- Emoji-as-bullet-markers are acceptable here for scannability, even though the user's
   general preference is anti-decoration. Social/announcement posts are the
   exception.
 
 ## Accuracy, when the post covers someone else's work
 
-These apply whenever the subject is a paper, finding, or project Ibrahim
-didn't build himself — they don't apply to his own announcements, where he's
-the authority on what he built.
+These apply whenever the subject is a paper, finding, or project the user
+didn't build themselves — they don't apply to the user's own announcements, where they're
+the authority on what they built.
 
 - **Never invent findings.** Work only from what's actually provided (the
   paper, abstract, or write-up). Infer the post's *structure*, never the
@@ -164,25 +164,25 @@ budget by compressing every section, not by dropping one:
   #SoftwareEngineering. Keep hashtags in English even on Arabic posts,
   consistent with keeping English tech terms untranslated.
 
-**If Ibrahim gives a different explicit length** — a real X/Twitter character
+**If the user gives a different explicit length** — a real X/Twitter character
 limit (~280 chars), "make it longer," or a request for the full narrative
-version — follow that instead. His latest explicit instruction always overrides
-this default, and skip hashtags if he's asked for a hard character limit that
+version — follow that instead. The user's latest explicit instruction always overrides
+this default, and skip hashtags if they've asked for a hard character limit that
 can't fit them.
 
 ## Language
 
-- Default to English unless Ibrahim writes in Arabic or asks for it.
+- Default to English unless the user writes in Arabic or asks for it.
 - Arabic: use standard/formal Arabic (fusha), not Egyptian ammiya, unless told
   otherwise. Keep English tech terms untranslated (Agentic AI, Skill, Claude,
   etc.). Same hook → turn → substance → reasoning → close shape applies.
-- If Ibrahim wants an Arabic LinkedIn post (not a tweet) built around a
+- If the user wants an Arabic LinkedIn post (not a tweet) built around a
   research paper, `linkedin-arabic-science-post` is the right skill for that
   longer, LinkedIn-paced format — this skill only covers the tweet-length case,
   regardless of subject matter.
-- If Ibrahim actually wants a LinkedIn post rather than a tweet, don't use this
+- If the user actually wants a LinkedIn post rather than a tweet, don't use this
   skill's word cap or hashtag rule for it — LinkedIn posts run longer with no
-  hashtag convention. Confirm which platform he means if it's ambiguous.
+  hashtag convention. Confirm which platform the user means if it's ambiguous.
 
 ## Example (~110 words + hashtags)
 
@@ -238,11 +238,11 @@ Same shape, third-person attribution throughout the substance and reasoning:
   shows...") instead of the field-level problem.
 - Using "I built a..." as the Turn sentence instead of "Here's..." — the bridge
   should present the artifact, not lead with a first-person construction verb.
-- For Ibrahim's own builds: third-person/descriptive voice ("it evaluates,"
+- For the user's own builds: third-person/descriptive voice ("it evaluates,"
   "it doesn't just flag") instead of first-person ownership voice ("I designed
   it to evaluate").
 - For someone else's work: first-person voice ("I found," "I built") as if
-  Ibrahim did the research or built the thing — attribution has to stay
+  the user did the research or built the thing — attribution has to stay
   third-person (`the authors`, `the team`) outside of an explicitly marked
   reflection.
 - Closing on a punchy feature-specific one-liner instead of echoing the opening
@@ -260,6 +260,6 @@ Same shape, third-person attribution throughout the substance and reasoning:
 - Packing the hook or close into one long clause chain to sound profound —
   the antithesis works better in two short sentences than one long one.
 - Writing a LinkedIn-length post (200+ words, multiple paragraphs, no hashtags)
-  when Ibrahim asked for a tweet — the platforms have different pacing; don't
+  when the user asked for a tweet — the platforms have different pacing; don't
   reuse LinkedIn habits here just because the underlying narrative shape is
   similar.
