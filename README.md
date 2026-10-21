@@ -2,7 +2,7 @@
 
 A collection of useful AI skills. Each skill lives in its own folder with a `SKILL.md` file that tells an AI agent (such as Claude) when to use the skill and how to carry it out.
 
-![AISkills skills map](assets/aiskills-overview-warm.png)
+![AISkills skills map](assets/aiskills-map.png)
 
 ## Skills
 
