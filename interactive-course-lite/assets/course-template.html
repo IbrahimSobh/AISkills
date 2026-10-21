@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{COURSE_TITLE}}</title>
+<script>
+/* Apply the saved (or OS) theme before first paint to avoid a flash. */
+(function () {
+  var t = null;
+  try { t = localStorage.getItem("ds-theme"); } catch (e) {}
+  if (t !== "light" && t !== "dark") t = window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  document.documentElement.dataset.theme = t;
+})();
+</script>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f4f4f1;
+  --surface: #fcfcfb;
+  --surface-2: #efeee9;
+  --border: #dcdbd4;
+  --text: #0b0b0b;
+  --text-2: #52514e;
+  --muted: #6b6a65;
+  --accent: #2a78d6;   /* default node / primary */
+  --accent-strong: #2b6bc9; /* primary button background (white text >= 4.5:1) */
+  --hot: #eb6834;      /* currently active / being compared */
+  --ok: #1baf7a;       /* found / success */
+  --bad: #e34948;      /* removed / error */
+  --violet: #6250d6;   /* secondary highlight (visited, pointer) */
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4;
+  --code-bg: #1e1f22; --code-text: #e6e4dc; --code-hl: rgba(235,104,52,.28);
+  --shadow: 0 1px 2px rgba(0,0,0,.05), 0 4px 16px rgba(0,0,0,.05);
+  --mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #121211;
+  --surface: #1a1a19;
+  --surface-2: #242422;
+  --border: #353532;
+  --text: #f0efec;
+  --text-2: #c3c2b7;
+  --muted: #8e8d86;
+  --accent: #3987e5;
+  --accent-strong: #2f6fcc;
+  --hot: #d95926;
+  --ok: #199e70;
+  --bad: #e66767;
+  --violet: #9085e9;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181;
+  --code-bg: #0e0e0d; --code-hl: rgba(217,89,38,.32);
+  --shadow: 0 1px 2px rgba(0,0,0,.4);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 72px; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 var(--sans); }
+a { color: var(--accent); }
+code { font-family: var(--mono); font-size: .9em; background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
+h1, h2, h3 { line-height: 1.25; }
+h2 { font-size: 1.75rem; margin: 0 0 .25rem; }
+h3 { font-size: 1.15rem; margin: 1.6rem 0 .5rem; }
+
+/* ---------- layout ---------- */
+header.top {
+  position: sticky; top: 0; z-index: 50; height: 56px;
+  display: flex; align-items: center; gap: 16px; padding: 0 20px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: blur(8px); border-bottom: 1px solid var(--border);
+}
+header.top .brand { font-weight: 700; font-size: 1.05rem; margin-right: auto; }
+header.top label { font-size: .85rem; color: var(--text-2); display: flex; align-items: center; gap: 8px; }
+.layout { display: grid; grid-template-columns: 230px minmax(0, 1fr); }
+nav.side {
+  position: sticky; top: 56px; height: calc(100vh - 56px); overflow-y: auto;
+  padding: 20px 12px; border-right: 1px solid var(--border);
+}
+nav.side a {
+  display: block; padding: 6px 10px; border-radius: 6px; color: var(--text-2);
+  text-decoration: none; font-size: .92rem;
+}
+nav.side a:hover { background: var(--surface-2); color: var(--text); }
+nav.side a.current { background: var(--surface-2); color: var(--text); font-weight: 600; box-shadow: inset 3px 0 0 var(--accent); }
+main { padding: 32px clamp(16px, 4vw, 56px) 80px; max-width: 1180px; }
+@media (max-width: 860px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  html { scroll-padding-top: 112px; }
+  nav.side {
+    position: sticky; top: 56px; z-index: 40; height: auto; overflow-x: auto; overflow-y: hidden;
+    display: flex; gap: 6px; padding: 8px 12px; border-right: 0; border-bottom: 1px solid var(--border);
+    background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(8px);
+    white-space: nowrap; scrollbar-width: thin;
+  }
+  nav.side a { flex: none; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--border); font-size: .85rem; background: var(--surface); }
+  nav.side a.current { box-shadow: none; border-color: var(--accent); background: var(--surface-2); }
+}
+
+/* Page sheets: each section is a sheet on a slightly darker page, with a chapter band on top and an end line */
+main { background: color-mix(in srgb, var(--bg) 92%, #000 8%); }
+.section { background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .07); padding: 0 28px 18px; margin: 0 0 32px; }
+.section.hero { padding: 28px 28px 18px; }
+.part + .section, .section + .part { margin-top: 32px; }
+.part { margin-bottom: 20px; }
+.band { margin: 0 -28px 18px; padding: 18px 28px; display: flex; align-items: center; gap: 18px;
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface)); border-bottom: 1px solid color-mix(in srgb, var(--accent) 25%, var(--surface));
+  border-radius: 10px 10px 0 0; }
+.band-n { flex: none; font: 600 46px/1 var(--sans); color: var(--accent); min-width: 1ch; text-align: center; }
+.band-k { font-size: .8rem; font-weight: 600; letter-spacing: .03em; color: var(--accent); margin-bottom: 2px; }
+.band h2 { margin: 0; }
+.endline { margin-top: 26px; padding-top: 8px; border-top: 1px solid var(--border); color: var(--muted); font-size: .85rem; text-align: center; }
+@media (max-width: 560px) {
+  main { padding-left: 8px !important; padding-right: 8px !important; }
+  .section { padding: 0 12px 12px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0, 0, 0, .06); }
+  .section.hero { padding: 16px 12px 12px; }
+  .band { margin: 0 -12px 14px; padding: 12px; gap: 12px; border-radius: 8px 8px 0 0; }
+  .band-n { font-size: 32px; }
+}
+.lead { color: var(--text-2); font-size: 1.08rem; margin-top: .25rem; max-width: 760px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; box-shadow: var(--shadow); min-width: 0; }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; margin: 20px 0; align-items: start; }
+@media (max-width: 1050px) { .grid2 { grid-template-columns: 1fr; } }
+.callout { border-left: 4px solid var(--accent); background: var(--surface); padding: 10px 16px; border-radius: 0 8px 8px 0; margin: 16px 0; }
+.callout.tip { border-color: var(--ok); }
+.callout.warn { border-color: var(--hot); }
+
+/* ---------- controls ---------- */
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+.controls .sep { width: 1px; height: 24px; background: var(--border); margin: 0 4px; }
+button {
+  font: 600 .88rem var(--sans); padding: 7px 13px; border-radius: 8px; cursor: pointer;
+  border: 1px solid var(--accent-strong); background: var(--accent-strong); color: #fff;
+  transition: filter .15s, transform .05s;
+}
+button:hover { filter: brightness(1.08); }
+button:active { transform: translateY(1px); }
+button.secondary { background: transparent; color: var(--text); border-color: var(--border); }
+button.secondary:hover { background: var(--surface-2); }
+button:disabled { opacity: .45; cursor: not-allowed; filter: none; }
+input[type="text"], input[type="number"], select {
+  font: .9rem var(--mono); padding: 7px 9px; border-radius: 8px; width: 84px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text);
+}
+input:focus-visible, button:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- visual area ---------- */
+.viz {
+  position: relative; min-height: 260px; border-radius: 10px; overflow: auto;
+  background: var(--surface-2); padding: 16px;
+  background-image: radial-gradient(var(--border) 1px, transparent 1px); background-size: 18px 18px;
+}
+.viz svg { display: block; max-width: 100%; }
+.viz .caption { display: block; margin: 0 0 8px; font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.node {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 46px; height: 46px; padding: 0 8px; border-radius: 9px;
+  border: 2px solid var(--accent); background: var(--surface); color: var(--text);
+  font: 600 15px var(--mono); transition: all .3s ease; position: relative;
+}
+.node.active  { border-color: var(--hot); background: color-mix(in srgb, var(--hot) 16%, var(--surface)); transform: translateY(-4px); }
+.node.found   { border-color: var(--ok);  background: color-mix(in srgb, var(--ok) 20%, var(--surface)); }
+.node.visited { border-color: var(--violet); background: color-mix(in srgb, var(--violet) 14%, var(--surface)); }
+.node.removed { border-color: var(--bad); opacity: 0; transform: scale(.6); }
+.node.dim     { opacity: .4; }
+.node.new     { animation: pop .4s ease; }
+.node .tag { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font: 600 11px var(--sans); color: var(--text-2); white-space: nowrap; }
+.node .sub { position: absolute; bottom: -19px; left: 50%; transform: translateX(-50%); font: 11px var(--mono); color: var(--muted); white-space: nowrap; }
+@keyframes pop { 0% { transform: scale(.4); opacity: 0; } 70% { transform: scale(1.08); } 100% { transform: scale(1); opacity: 1; } }
+/* SVG node equivalents (trees, graphs) */
+.svg-node circle { fill: var(--surface); stroke: var(--accent); stroke-width: 2; transition: all .3s; }
+.svg-node text { fill: var(--text); font: 600 14px var(--mono); text-anchor: middle; dominant-baseline: central; }
+.svg-node.active circle  { stroke: var(--hot); fill: color-mix(in srgb, var(--hot) 22%, var(--surface)); }
+.svg-node.found circle   { stroke: var(--ok); fill: color-mix(in srgb, var(--ok) 24%, var(--surface)); }
+.svg-node.visited circle { stroke: var(--violet); fill: color-mix(in srgb, var(--violet) 18%, var(--surface)); }
+.svg-edge { stroke: var(--muted); stroke-width: 2; fill: none; transition: all .3s; }
+.svg-edge.active { stroke: var(--hot); stroke-width: 3; }
+.svg-edge.found  { stroke: var(--ok); stroke-width: 3; }
+
+.status { margin-top: 10px; min-height: 1.6em; font-size: .92rem; color: var(--text-2); }
+.log { margin-top: 10px; max-height: 150px; overflow-y: auto; font: 12.5px/1.5 var(--mono); border-top: 1px dashed var(--border); padding-top: 8px; }
+.log div { padding: 1px 0; color: var(--text-2); }
+.log div.ok::before  { content: "✓ "; color: var(--ok); }
+.log div.err::before { content: "✗ "; color: var(--bad); }
+.log div.info::before { content: "→ "; color: var(--accent); }
+.log div:first-child { color: var(--text); }
+
+/* ---------- code panel ---------- */
+.code {
+  background: var(--code-bg); color: var(--code-text); border-radius: 10px;
+  font: 12.5px/1.6 var(--mono); padding: 10px 0; max-height: 470px; overflow: auto; position: relative;
+}
+.code .title { color: #8e8d86; font-size: 11px; padding: 0 14px 6px; text-transform: uppercase; letter-spacing: .08em; }
+.code .ln { display: flex; white-space: pre; padding: 0 14px 0 0; transition: background .2s; }
+.code .ln .no { width: 36px; flex: none; text-align: right; padding-right: 12px; color: #5f5e59; user-select: none; }
+.code .ln.hl { background: var(--code-hl); box-shadow: inset 3px 0 0 var(--hot); }
+.t-k { color: #c792ea; } .t-sf { color: #f78c6c; } .t-s { color: #c3e88d; } .t-c { color: #7f7e78; font-style: italic; } .t-n { color: #f9c859; } .t-d { color: #82aaff; }
+
+/* ---------- formulas ---------- */
+.formula { font: 600 1rem var(--mono); background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; margin: 12px 0; text-align: center; overflow-x: auto; }
+.formula small { display: block; font: .82rem var(--sans); color: var(--text-2); margin-top: 4px; }
+.fstrip { font: 600 .84rem/1.5 var(--mono); background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 6px; padding: 6px 10px; margin: 0 0 10px; color: var(--text); }
+.fstrip span { display: inline-block; margin-right: 16px; white-space: nowrap; }
+.fstrip span:last-child { margin-right: 0; }
+@media (max-width: 560px) { .fstrip { font-size: .78rem; overflow-wrap: anywhere; } .fstrip span { white-space: normal; display: block; margin-right: 0; } }
+.caption .nt, .sub-cap .nt { text-transform: none; letter-spacing: 0; font-family: var(--mono); }
+
+/* ---------- tables ---------- */
+table.cx { border-collapse: collapse; width: 100%; font-size: .92rem; margin: 10px 0; }
+table.cx th, table.cx td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+table.cx th { font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-2); }
+table.cx tbody tr:hover { background: var(--surface-2); }
+.big { font-family: var(--mono); font-weight: 600; white-space: nowrap; }
+.big:is(.o1, .olog, .on, .onlog, .on2)::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; background: var(--muted); }
+.big.o1::before { background: var(--s1); } .big.olog::before { background: var(--s3); } .big.on::before { background: var(--s4); }
+.big.onlog::before { background: var(--s5); } .big.on2::before { background: var(--s2); }
+
+/* ---------- quiz ---------- */
+.quiz { margin: 16px 0; }
+.quiz .q { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; }
+.quiz .q p { margin: 0 0 10px; font-weight: 600; }
+.quiz .opts { display: flex; flex-wrap: wrap; gap: 8px; }
+.quiz .opts button { background: var(--surface-2); color: var(--text); border-color: var(--border); font-weight: 500; }
+.quiz .opts button.right { background: color-mix(in srgb, var(--ok) 22%, var(--surface)); border-color: var(--ok); }
+.quiz .opts button.wrong { background: color-mix(in srgb, var(--bad) 18%, var(--surface)); border-color: var(--bad); }
+.quiz .why { margin-top: 10px; font-size: .92rem; color: var(--text-2); display: none; }
+.quiz .why.show { display: block; }
+.quiz .score { font-size: .9rem; color: var(--text-2); }
+
+/* ---------- intro bits ---------- */
+.hero h1 { font-size: clamp(2rem, 4vw, 2.8rem); margin: 0 0 8px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text); text-decoration: none; font-size: .9rem; }
+.chip:hover { border-color: var(--accent); }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: .85rem; color: var(--text-2); margin: 4px 0 8px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 14px; height: 3px; border-radius: 2px; display: inline-block; }
+.chart-wrap { position: relative; }
+.tooltip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: .82rem; box-shadow: var(--shadow); white-space: nowrap; opacity: 0; transition: opacity .1s; z-index: 5; }
+.tooltip .row { display: flex; align-items: center; gap: 6px; }
+.tooltip .row i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.tooltip .row b { margin-left: auto; padding-left: 14px; font-family: var(--mono); }
+.order { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 12px 0; counter-reset: step; }
+.order a { counter-increment: step; display: block; padding: 10px 12px; border-radius: 10px; background: var(--surface); border: 1px solid var(--border); text-decoration: none; color: var(--text); font-size: .92rem; }
+.order a::before { content: counter(step); display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--surface-2); color: var(--text-2); font-size: .75rem; font-weight: 700; margin-right: 8px; }
+.order a:hover { border-color: var(--accent); }
+.order a small { display: block; color: var(--muted); margin-top: 4px; font-size: .8rem; }
+.scenario { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.scenario .card p { margin: 0 0 10px; }
+.scenario .answer { display: none; font-size: .92rem; color: var(--text-2); }
+.scenario .answer.show { display: block; }
+.scenario select { width: 100%; font-family: var(--sans); }
+ol.ex li { margin-bottom: 6px; }
+footer { color: var(--muted); font-size: .85rem; padding: 32px 0; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* ---------- Python course: memory frames, console, tokens ---------- */
+.node.bad { border-color: var(--bad); background: color-mix(in srgb, var(--bad) 18%, var(--surface)); }
+.tr-frames { display: flex; flex-wrap: wrap; gap: 14px; padding-top: 22px; align-items: flex-start; }
+.tr-frame { border: 1px dashed var(--border); border-radius: 10px; padding: 10px 12px 4px; background: var(--surface); min-width: 160px; max-width: 100%; }
+.tr-frame.local { border: 2px solid var(--violet); }
+.tr-frame h4 { margin: 0 0 24px; font: 600 12px var(--sans); color: var(--text-2); }
+.tr-frame.local h4 { color: var(--violet); }
+.tr-vars { display: flex; flex-wrap: wrap; gap: 44px 12px; padding-bottom: 22px; }
+.tr-vars .empty { color: var(--muted); font: 12px var(--mono); }
+.tr-vars .node, .py-row .node { max-width: 100%; overflow: visible; white-space: pre; }
+.tr-outlabel { margin-top: 6px; font: 600 11px var(--sans); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.console { background: var(--code-bg); color: var(--code-text); border-radius: 8px; font: 13px/1.55 var(--mono); padding: 10px 12px; min-height: 64px; max-height: 240px; overflow: auto; margin-top: 6px; white-space: pre-wrap; word-break: break-word; }
+.console .in { color: #82aaff; }
+.console .err { color: #ff8a80; }
+.console .dim { color: #7f7e78; }
+.console .new { animation: fadein .35s ease; }
+@keyframes fadein { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+.tok-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 34px 0 12px; min-height: 96px; }
+.tok-op { font: 700 18px var(--mono); color: var(--text-2); padding: 0 2px; transition: color .3s; }
+.tok-op.active { color: var(--hot); }
+.py-boxes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding-top: 22px; }
+@media (max-width: 560px) { .py-boxes { grid-template-columns: minmax(0, 1fr); } }
+.py-box { border: 1px dashed var(--border); border-radius: 10px; padding: 10px 12px 6px; background: var(--surface); min-width: 0; }
+.py-box h4 { margin: 0 0 24px; font: 600 12px var(--sans); color: var(--text-2); }
+.py-box h4 code { font-size: 12px; }
+.py-row { display: flex; flex-wrap: wrap; gap: 30px 10px; min-height: 46px; align-items: center; padding-bottom: 22px; }
+.py-row.tight { gap: 10px; padding-bottom: 8px; }
+.py-row .empty { color: var(--muted); font: 12px var(--mono); }
+.py-ask { display: flex; gap: 8px; margin-top: 8px; align-items: center; }
+.py-ask input { flex: 1; width: auto; min-width: 0; }
+input.wide { width: 170px; }
+input.num { width: 64px; }
+label.inl { font-size: .85rem; color: var(--text-2); display: inline-flex; align-items: center; gap: 6px; }
+.tb-line { display: block; width: 100%; text-align: left; background: transparent; color: var(--code-text); border: 0; border-radius: 4px;
+  font: 13px/1.55 var(--mono); padding: 2px 8px; white-space: pre-wrap; cursor: pointer; }
+.tb-line:hover { background: rgba(255,255,255,.06); filter: none; }
+.tb-line.on { background: var(--code-hl); box-shadow: inset 3px 0 0 var(--hot); }
+.tb-line:active { transform: none; }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">{{BRAND_EMOJI}} {{BRAND_SHORT}}</div>
+  <label>Animation speed
+    <input type="range" id="speed" min="0.25" max="3" step="0.25" value="1" style="width:110px">
+    <span id="speedVal" style="font-family:var(--mono);width:36px">1×</span>
+  </label>
+  <button class="secondary" id="themeBtn" title="Toggle light / dark">◐ Theme</button>
+</header>
+
+<div class="layout">
+<nav class="side" id="nav" aria-label="Sections"></nav>
+<main>
+
+<script>
+/* ======================================================================
+   DS — shared helpers used by every visualizer below.
+   ====================================================================== */
+const DS = (() => {
+  const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+  function el(tag, props = {}, ...children) {
+    const e = document.createElement(tag);
+    for (const [k, v] of Object.entries(props || {})) {
+      if (v == null || v === false) continue;
+      if (k === "class") e.className = v;
+      else if (k === "style" && typeof v === "object") Object.assign(e.style, v);
+      else if (k === "dataset") Object.assign(e.dataset, v);
+      else if (k === "html") e.innerHTML = v;
+      else if (k.startsWith("on") && typeof v === "function") e.addEventListener(k.slice(2), v);
+      else e.setAttribute(k, v === true ? "" : v);
+    }
+    for (const c of children.flat()) if (c != null && c !== false) e.append(c instanceof Node ? c : document.createTextNode(c));
+    return e;
+  }
+
+  const SVGNS = "http://www.w3.org/2000/svg";
+  function svg(tag, attrs = {}, ...children) {
+    const e = document.createElementNS(SVGNS, tag);
+    for (const [k, v] of Object.entries(attrs)) if (v != null) e.setAttribute(k, v);
+    for (const c of children.flat()) if (c != null) e.append(c instanceof Node ? c : document.createTextNode(c));
+    return e;
+  }
+
+  const reducedMotion = () => !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+  let speed = 1;
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  // Pause between animation steps; scaled by the global speed slider.
+  const wait = (mult = 1) => sleep(650 * mult / speed);
+
+  // Run an async animation, disabling the section's buttons until it finishes.
+  async function run(root, fn) {
+    if (root.dataset.busy) return;
+    root.dataset.busy = "1";
+    // Only touch buttons that are currently enabled, so ones disabled for other
+    // reasons stay disabled afterwards.
+    const btns = [...root.querySelectorAll("button:not(.always)")].filter(b => !b.disabled);
+    const focused = document.activeElement;
+    btns.forEach(b => (b.disabled = true));
+    try { await fn(); }
+    catch (e) { console.error(e); }
+    finally {
+      delete root.dataset.busy;
+      btns.forEach(b => (b.disabled = false));
+      // Disabling a focused button drops focus to <body>; give it back.
+      const lost = !document.activeElement || document.activeElement === document.body;
+      if (focused && btns.includes(focused) && lost && focused.isConnected && !focused.disabled) focused.focus({ preventScroll: true });
+    }
+  }
+
+  function hlPy(line) {
+    const re = /(#.*$)|(f?"[^"]*"|f?'[^']*')|\b(def|class|if|elif|else|while|for|return|in|not|and|or|is|None|True|False|raise|yield|from|import|as|try|except|finally|global|with|del|break|continue|lambda|self|pass)\b|\b(\d+)\b/g;
+    let out = "", last = 0;
+    line.replace(re, (m, c, s, k, n, off) => {
+      out += esc(line.slice(last, off));
+      const cls = c ? "c" : s ? "s" : k ? (k === "self" ? "sf" : "k") : "n";
+      out += `<span class="t-${cls}">${esc(m)}</span>`;
+      last = off + m.length;
+      return m;
+    });
+    out += esc(line.slice(last));
+    return out.replace(/(<span class="t-k">(?:def|class)<\/span>\s+)(\w+)/, '$1<span class="t-d">$2</span>');
+  }
+
+  // Render Python source into a code panel. Returns { hl(...targets), clear() }.
+  // A target is a 1-based line number or a substring; a substring highlights the
+  // first line that contains it. To disambiguate, a target may also be an object
+  // { find: "substring", after: "def method" }: the first line containing `find`
+  // at or after the first line containing `after`.
+  function code(container, src, title) {
+    const lines = src.replace(/^\n+|\s+$/g, "").split("\n");
+    container.innerHTML = "";
+    if (title) container.append(el("div", { class: "title" }, title));
+    const rows = lines.map((t, i) => {
+      const r = el("div", { class: "ln" }, el("span", { class: "no" }, String(i + 1)), el("span", { html: hlPy(t) || " " }));
+      container.append(r);
+      return r;
+    });
+    function clear() { rows.forEach(r => r.classList.remove("hl")); }
+    function hl(...targets) {
+      clear();
+      let first = null;
+      for (const t of targets.flat()) {
+        if (t == null) continue;
+        let idx;
+        if (typeof t === "number") idx = t - 1;
+        else if (typeof t === "object") {
+          const start = t.after != null ? lines.findIndex(l => l.includes(t.after)) : 0;
+          idx = start < 0 || t.find == null ? -1 : lines.findIndex((l, i) => i >= start && l.includes(t.find));
+        }
+        else idx = lines.findIndex(l => l.includes(t));
+        if (rows[idx]) { rows[idx].classList.add("hl"); first = first ?? rows[idx]; }
+      }
+      if (first) {
+        const top = first.offsetTop - container.clientHeight / 3;
+        container.scrollTo({ top: Math.max(0, top), behavior: reducedMotion() ? "auto" : "smooth" });
+      }
+    }
+    return { hl, clear, lines };
+  }
+
+  // Prepend a line to an operation log. kind: "ok" | "err" | "info" | "".
+  function log(logEl, msg, kind = "") {
+    logEl.prepend(el("div", { class: kind, html: msg }));
+    while (logEl.children.length > 40) logEl.lastChild.remove();
+  }
+
+  // onChange (optional) is called with {correct, answered, total} after each answer.
+  function quiz(container, questions, onChange) {
+    container.classList.add("quiz");
+    let correct = 0, answered = 0;
+    const score = el("div", { class: "score" });
+    const update = () => {
+      score.textContent = `Score: ${correct} / ${answered} answered (${questions.length} total)`;
+      if (onChange) onChange({ correct, answered, total: questions.length });
+    };
+    questions.forEach(({ q, options, answer, why }) => {
+      const whyEl = el("div", { class: "why", "aria-live": "polite" });
+      const opts = el("div", { class: "opts" });
+      let done = false;
+      options.forEach((o, i) => {
+        const b = el("button", {
+          class: "always",
+          onclick: () => {
+            if (done) return;
+            done = true; answered++;
+            const ok = i === answer;
+            const rightBtn = opts.children[answer];
+            if (ok) correct++;
+            else { b.classList.add("wrong"); b.prepend("✗ "); }
+            rightBtn.classList.add("right"); rightBtn.prepend("✓ ");
+            whyEl.innerHTML = (ok ? "<b>Correct!</b> " : `<b>Not quite.</b> The correct answer is <b>${esc(options[answer])}</b>. `) + (why || "");
+            whyEl.classList.add("show");
+            update();
+          }
+        }, o);
+        opts.append(b);
+      });
+      container.append(el("div", { class: "q" }, el("p", { html: q }), opts, whyEl));
+    });
+    container.append(score);
+    update();
+  }
+
+  const randInt = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+  // Parse "5, 3 8" -> [5, 3, 8] (numbers when possible, otherwise strings).
+  const parseVals = str => String(str).split(/[\s,]+/).filter(Boolean).map(s => (isNaN(+s) ? s : +s));
+
+  return {
+    el, svg, esc, sleep, wait, run, code, log, quiz, randInt, parseVals, reducedMotion,
+    get speed() { return speed; },
+    set speed(v) { speed = v; },
+  };
+})();
+
+document.getElementById("speed").addEventListener("input", e => {
+  DS.speed = +e.target.value;
+  document.getElementById("speedVal").textContent = DS.speed + "×";
+});
+document.getElementById("themeBtn").addEventListener("click", () => {
+  const root = document.documentElement;
+  const dark = root.dataset.theme === "dark" ||
+    (!root.dataset.theme && matchMedia("(prefers-color-scheme: dark)").matches);
+  const next = dark ? "light" : "dark";
+  root.dataset.theme = next;
+  try { localStorage.setItem("ds-theme", next); } catch (e) {}
+  document.dispatchEvent(new Event("themechange"));
+});
+// Theme was already applied by the inline script in <head> (saved choice, else OS preference).
+</script>
+
+
+<style>
+/* ---------- Demo building blocks: plots, meters, chips, flows, chat, part banners ---------- */
+.plot { width: 100%; height: auto; display: block; }
+.plot .axis { stroke: var(--muted); stroke-width: 1.5; }
+.plot .grid { stroke: var(--border); stroke-width: 1; }
+.plot .lbl { fill: var(--text-2); font: 12px var(--sans); }
+.plot .lbl.m { font-family: var(--mono); }
+.plot .pt { stroke: var(--surface); stroke-width: 1.5; transition: fill .4s, r .3s; }
+.plot .pt.a { fill: var(--s1); } .plot .pt.b { fill: var(--s2); } .plot .pt.c { fill: var(--s3); }
+.plot .pt.u { fill: var(--muted); }
+.plot .pt.test { fill: var(--surface); stroke: var(--s2); stroke-width: 2.5; }
+.plot .pt.bad { fill: var(--bad); }
+.plot .fit { fill: none; stroke: var(--hot); stroke-width: 3; }
+.plot .fit2 { fill: none; stroke: var(--violet); stroke-width: 2.5; stroke-dasharray: 6 5; }
+.plot .cent { stroke: var(--text); stroke-width: 2.5; }
+.plot .cell { fill: var(--surface); stroke: var(--border); stroke-width: 1.5; }
+.plot .cell.goal { fill: color-mix(in srgb, var(--ok) 25%, var(--surface)); stroke: var(--ok); }
+.plot .cell.pit { fill: color-mix(in srgb, var(--bad) 22%, var(--surface)); stroke: var(--bad); }
+.plot .robot { font-size: 26px; transition: transform .35s ease; }
+.plot .pol { fill: var(--accent); font: 700 18px var(--sans); }
+.plot .nn-edge { transition: stroke-width .3s, stroke .3s; }
+.plot .nn-node { stroke-width: 2.5; transition: fill .3s; }
+.plot .nn-val { fill: var(--text); font: 600 12px var(--mono); }
+.meter { display: flex; align-items: center; gap: 8px; font-size: .85rem; color: var(--text-2); margin: 4px 0; }
+.meter .bar { flex: 1; height: 10px; background: var(--surface-2); border-radius: 6px; overflow: hidden; border: 1px solid var(--border); }
+.meter .bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .35s ease; }
+.meter .bar i.hot { background: var(--hot); } .meter .bar i.ok { background: var(--ok); } .meter .bar i.violet { background: var(--violet); }
+.meter b { font-family: var(--mono); min-width: 72px; text-align: right; color: var(--text); }
+.toks { display: flex; flex-wrap: wrap; gap: 4px; padding-top: 26px; min-height: 60px; }
+.tk { font: 14px/1.2 var(--mono); padding: 5px 6px; border-radius: 5px; white-space: pre; border: 1px solid transparent; }
+.tk:nth-child(5n+1) { background: color-mix(in srgb, var(--s1) 22%, var(--surface)); }
+.tk:nth-child(5n+2) { background: color-mix(in srgb, var(--s3) 24%, var(--surface)); }
+.tk:nth-child(5n+3) { background: color-mix(in srgb, var(--s4) 26%, var(--surface)); }
+.tk:nth-child(5n+4) { background: color-mix(in srgb, var(--s5) 24%, var(--surface)); }
+.tk:nth-child(5n+5) { background: color-mix(in srgb, var(--violet) 20%, var(--surface)); }
+.tk.new { animation: pop .35s ease; }
+.tk.att { border-color: var(--hot); }
+.cand { display: grid; grid-template-columns: 110px minmax(0, 1fr) 54px; gap: 6px 10px; align-items: center; font-size: .88rem; margin-top: 8px; }
+.cand .w { font-family: var(--mono); text-align: right; }
+.cand .b { height: 14px; background: var(--surface-2); border-radius: 4px; overflow: hidden; border: 1px solid var(--border); }
+.cand .b i { display: block; height: 100%; background: var(--accent); transition: width .35s; }
+.cand .b i.pick { background: var(--ok); }
+.cand .p { font-family: var(--mono); color: var(--text-2); }
+.gen { font: 15px/1.6 var(--mono); padding: 30px 0 4px; min-height: 64px; }
+.gen .new { color: var(--ok); font-weight: 700; }
+.toggles { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0 0 12px; }
+.toggles label { display: inline-flex; align-items: center; gap: 6px; font-size: .9rem; cursor: pointer; }
+.toggles input { accent-color: var(--accent); width: 16px; height: 16px; }
+.answerbox { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-top: 26px; font-size: .92rem; white-space: pre-wrap; }
+.answerbox .who { display: block; font: 600 11px var(--sans); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 4px; }
+.answerbox.mono { font-family: var(--mono); font-size: .85rem; }
+.flow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding-top: 28px; }
+.flow .node { min-width: 0; height: auto; min-height: 46px; padding: 6px 10px; font: 600 13px var(--sans); text-align: center; flex-direction: column; }
+.flow .arr { color: var(--muted); font: 700 18px var(--sans); }
+.chat { display: grid; gap: 6px; margin-top: 8px; max-height: 300px; overflow: auto; }
+.chat .m { border-radius: 8px; padding: 7px 10px; font-size: .88rem; border: 1px solid var(--border); background: var(--surface); white-space: pre-wrap; }
+.chat .m b { display: block; font: 600 11px var(--sans); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 2px; }
+.chat .m.think b { color: var(--violet); } .chat .m.act b { color: var(--hot); } .chat .m.obs b { color: var(--accent); } .chat .m.ans b { color: var(--ok); } .chat .m.user b { color: var(--text-2); }
+.chat .m.act { font-family: var(--mono); font-size: .82rem; }
+.chat .m.warn { border-color: var(--bad); background: color-mix(in srgb, var(--bad) 10%, var(--surface)); }
+.chat .m.new { animation: fadein .35s ease; }
+.part { margin: 36px 0 0; padding: 18px 20px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); box-shadow: inset 4px 0 0 var(--accent); }
+.part h2 { margin: 0; font-size: 1.35rem; }
+.part p { margin: 4px 0 0; color: var(--text-2); }
+.loop-svg .ph rect { fill: var(--surface); stroke: var(--border); stroke-width: 2; transition: all .3s; }
+.loop-svg .ph text { fill: var(--text); font: 700 15px var(--sans); text-anchor: middle; dominant-baseline: central; }
+.loop-svg .ph.on rect { stroke: var(--hot); fill: color-mix(in srgb, var(--hot) 16%, var(--surface)); }
+.loop-svg .ph.done rect { stroke: var(--ok); fill: color-mix(in srgb, var(--ok) 18%, var(--surface)); }
+.loop-svg .ln { stroke: var(--muted); stroke-width: 2; fill: none; }
+.mini-table { width: 100%; border-collapse: collapse; font-size: .85rem; margin-top: 8px; }
+.mini-table td, .mini-table th { padding: 4px 6px; border-bottom: 1px solid var(--border); text-align: left; }
+.mini-table th { color: var(--text-2); font-weight: 600; font-size: .78rem; }
+</style>
+<script>
+/* ======================================================================
+   KIT — small demo helpers: seeded random numbers, SVG plots, softmax, cosine.
+   ====================================================================== */
+const KIT = (() => {
+  // Seeded random generator (mulberry32), so demos look the same every time.
+  function rng(seed) {
+    return () => {
+      seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  // Normal-ish noise from a uniform generator.
+  const gauss = r => (r() + r() + r() + r() - 2) / 2;
+
+  // A 2-D plot frame with axes: returns { svg, X, Y, g } where X/Y map data → pixels.
+  function plot(container, { w = 560, h = 300, x0, x1, y0, y1, xl = "", yl = "", xt = [], yt = [], pad = [44, 18, 34, 54] }) {
+    const [pt, pr, pb, pl] = pad;
+    const X = x => pl + (x - x0) / (x1 - x0) * (w - pl - pr);
+    const Y = y => h - pb - (y - y0) / (y1 - y0) * (h - pt - pb);
+    const s = DS.svg("svg", { viewBox: `0 0 ${w} ${h}`, class: "plot", role: "img" });
+    for (const t of yt) s.append(DS.svg("line", { class: "grid", x1: pl, x2: w - pr, y1: Y(t), y2: Y(t) }), DS.svg("text", { class: "lbl m", x: pl - 6, y: Y(t) + 4, "text-anchor": "end" }, String(t)));
+    for (const t of xt) s.append(DS.svg("text", { class: "lbl m", x: X(t), y: h - pb + 16, "text-anchor": "middle" }, String(t)));
+    s.append(DS.svg("line", { class: "axis", x1: pl, x2: w - pr, y1: h - pb, y2: h - pb }), DS.svg("line", { class: "axis", x1: pl, x2: pl, y1: pt - 6, y2: h - pb }));
+    if (xl) s.append(DS.svg("text", { class: "lbl", x: w - pr, y: h - 4, "text-anchor": "end" }, xl));
+    if (yl) s.append(DS.svg("text", { class: "lbl", x: pl, y: pt - 14, "text-anchor": "start" }, yl));
+    const g = DS.svg("g");
+    s.append(g);
+    container.append(s);
+    return { svg: s, X, Y, g, w, h };
+  }
+  const softmax = (logits, T) => {
+    if (T <= 0.001) { const m = Math.max(...logits); const i = logits.indexOf(m); return logits.map((_, j) => (j === i ? 1 : 0)); }
+    const m = Math.max(...logits);
+    const e = logits.map(l => Math.exp((l - m) / T));
+    const s = e.reduce((a, b) => a + b, 0);
+    return e.map(v => v / s);
+  };
+  const cosine = (a, b) => {
+    let d = 0, na = 0, nb = 0;
+    for (let i = 0; i < a.length; i++) { d += a[i] * b[i]; na += a[i] * a[i]; nb += b[i] * b[i]; }
+    return na && nb ? d / Math.sqrt(na * nb) : 0;
+  };
+  return { rng, gauss, plot, softmax, cosine };
+})();
+</script>
+
+<section class="section hero" id="intro" data-title="Welcome">
+  <div class="kicker">Free self-paced course · Certificate on completion</div>
+  <h1>{{COURSE_TITLE}}</h1>
+  <p class="byline" style="margin:-6px 0 12px;font-size:.88rem;font-style:italic;color:var(--text-2)">By <a href="{{AUTHOR_URL}}" target="_blank" rel="noopener">{{AUTHOR_NAME}}</a></p>
+  <p class="lead">{{INTRO_LEAD: 2-3 sentences: what the course covers, that each lesson pairs the <b>theory</b> (the main idea in plain words) with <b>practice</b> (interactive demos, code that lights up step by step, quizzes), and that passing the final quiz earns a certificate.}}</p>
+  <style>
+    #intro .kicker { font-size: .8rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin: 0 0 6px; }
+    #intro .pillars { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 18px 0 0; }
+    #intro .pillar { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+    #intro .pillar .p-ico { font-size: 1.4rem; line-height: 1; }
+    #intro .pillar h3 { margin: 8px 0 4px; font-size: 1rem; }
+    #intro .pillar p { margin: 0; color: var(--text-2); font-size: .9rem; line-height: 1.45; }
+    #intro .path { list-style: none; counter-reset: step; margin: 10px 0 0; padding: 0; display: grid; gap: 8px; }
+    #intro .path li { counter-increment: step; display: grid; grid-template-columns: 26px minmax(0, 1fr); column-gap: 12px; align-items: start; }
+    #intro .path li::before { content: counter(step); flex: none; width: 26px; height: 26px; border-radius: 50%; display: inline-grid; place-items: center;
+      font-weight: 700; font-size: .85rem; color: var(--accent); border: 2px solid var(--accent); grid-row: span 2; }
+    #intro .path li b, #intro .path li span { grid-column: 2; }
+    #intro .path li span { color: var(--text-2); font-size: .95rem; }
+    #intro .facts { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 14px 0 0; padding: 0; list-style: none; font-size: .9rem; color: var(--text-2); }
+    #intro .facts b { color: var(--text); }
+    @media (max-width: 700px) { #intro .pillars { grid-template-columns: minmax(0, 1fr); } }
+    /* colour key (optional): delete these .ckey rules together with the key block if the course has no key */
+    #intro .ckey { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin: 16px 0 0; }
+    #intro .ckey h3 { margin: 0 0 2px; font-size: 1rem; }
+    #intro .ckey > p { margin: 0 0 12px; color: var(--text-2); font-size: .92rem; }
+    #intro .ckey ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 18px; }
+    #intro .ckey li { display: flex; align-items: center; gap: 12px; }
+    #intro .ckey .node { flex: none; min-width: 40px; height: 40px; font-size: 14px; transform: none; }
+    #intro .ckey b { display: block; }
+    @media (max-width: 560px) { #intro .ckey ul { grid-template-columns: minmax(0, 1fr); } }
+    #intro .ckey small { color: var(--text-2); font-size: .85rem; line-height: 1.35; display: block; }
+    #intro .map { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 4fr); gap: 12px; }
+    #intro .map h4 { margin: 0 0 6px; font-size: .9rem; color: var(--text-2); }
+    @media (max-width: 700px) { #intro .map { grid-template-columns: minmax(0, 1fr); } }
+    #intro .learn { list-style: none; margin: 8px 0 18px; padding: 0; display: grid; gap: 8px; }
+    #intro .learn li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px; align-items: start; }
+    #intro .learn li span { font-size: 1.15rem; line-height: 1.5; }
+  </style>
+  <h3>What you'll learn</h3>
+  <ul class="learn">
+    <li><span aria-hidden="true">{{EMOJI_1}}</span><div>{{LEARN_POINT_1 (under 17 words, same text as the README)}}</div></li>
+    <li><span aria-hidden="true">{{EMOJI_2}}</span><div>{{LEARN_POINT_2}}</div></li>
+    <li><span aria-hidden="true">{{EMOJI_3}}</span><div>{{LEARN_POINT_3}}</div></li>
+  </ul>
+  <div class="pillars">
+    <div class="pillar"><div class="p-ico" aria-hidden="true">📘</div><h3>Theory</h3><p>{{THEORY_PILLAR: the main ideas in plain words, with everyday examples and simple diagrams.}}</p></div>
+    <div class="pillar"><div class="p-ico" aria-hidden="true">🛠️</div><h3>Practice</h3><p>{{PRACTICE_PILLAR: name 4-6 of the course's actual demos. A quiz in every lesson.}}</p></div>
+    <div class="pillar"><div class="p-ico" aria-hidden="true">🎓</div><h3>Certificate</h3><p>Score 80% or more on the final quiz to get a certificate with your name, ready to print, save as PDF or download as an image.</p></div>
+  </div>
+  <ul class="facts" aria-label="Course facts">
+    <li><b>{{N_LESSONS}}</b> lessons</li>
+    <li><b>{{N_LESSON_QS}}</b> lesson quiz questions</li>
+    <li><b>{{N_FINAL_QS}}</b>-question final quiz</li>
+    <li>{{PREREQUISITES, e.g. No coding background needed}}</li>
+    <li>Self-paced · works offline</li>
+  </ul>
+
+  <h3>How the course works</h3>
+  <ol class="path">
+    <li><b>{{PATH_STEP_1, e.g. Start with the basics}}</b><span>{{one line}}</span></li>
+    <li><b>In each lesson</b><span>read the idea, try the interactive demo, follow the code beside it, then take the lesson quiz.</span></li>
+    <li><b>Take the final quiz</b><span>{{N_FINAL_QS}} questions on the main concepts. Score {{PASS_COUNT}} of {{N_FINAL_QS}} or more (80%) to earn your certificate.</span></li>
+  </ol>
+  <div class="callout tip"><b>Tip:</b> {{TIP: what the code panels are and whether learners need to run them}}. Use the <b>Animation speed</b> slider at the top to slow down any demo, and retake any quiz as often as you like.</div>
+
+  <!-- COLOUR KEY (optional, course-design §5): keep only if most demos use the .node states; then rewrite the
+       four lines for this subject. Otherwise delete this block and the #intro .ckey CSS rules. -->
+  <div class="ckey" role="group" aria-labelledby="ckeyTitle">
+    <h3 id="ckeyTitle">Colour key for the demos</h3>
+    <p>When a demo runs, boxes change colour to show what's happening at that moment:</p>
+    <ul>
+      <li><span class="node" aria-hidden="true">A</span><span><b>Normal</b><small>{{KEY_NORMAL: an item not involved in the current step}}</small></span></li>
+      <li><span class="node active" aria-hidden="true">A</span><span><b>{{KEY_ACTIVE_LABEL: e.g. Working on it}}</b><small>{{KEY_ACTIVE: what is being used or compared right now}}</small></span></li>
+      <li><span class="node visited" aria-hidden="true">A</span><span><b>{{KEY_VISITED_LABEL: e.g. Visited / kept}}</b><small>{{KEY_VISITED: what was already seen, chosen or kept}}</small></span></li>
+      <li><span class="node found" aria-hidden="true">A</span><span><b>Result</b><small>{{KEY_FOUND: the answer or finished step, in this subject's words}}</small></span></li>
+    </ul>
+  </div>
+  <!-- /COLOUR KEY -->
+
+  <h3>Course map</h3>
+  <div class="order" style="margin:0">
+    <a href="#lesson1">{{LESSON_1_TITLE}}<small>{{3-6 word summary}}</small></a>
+    <!-- one <a> per lesson, in order. For a course with parts, use the two-column .map layout:
+         <div class="map"><div><h4>Part A · …</h4><div class="order" style="grid-template-columns:minmax(0,1fr);margin:0">…</div></div>
+         <div><h4>Part B · …</h4><div class="order" style="margin:0;counter-reset:step N">…</div></div></div> -->
+  </div>
+</section>
+
+<!-- Optional part banner (use when the course has parts; it is not a nav section):
+<div class="part" id="partA"><h2>Part A · {{PART_TITLE}}</h2><p>{{one-line summary}}</p></div> -->
+
+
+<!-- ===================================================================== 1
+     EXAMPLE LESSON. Copy this section + its script for every lesson, then replace the content.
+     Pattern: h2 · lead (the idea in 1-2 sentences) · analogy · interactive demo beside a code panel ·
+     tables / lists explaining details · "Where it shows up" · 3-question quiz.  -->
+<section class="section" id="lesson1" data-title="1. {{LESSON_1_TITLE}}">
+  <h2>1. {{LESSON_1_TITLE}} <small style="color:var(--muted);font-weight:500">({{short subtitle}})</small></h2>
+  <p class="lead">{{The main idea in 1-2 plain sentences. Explain every new term the first time it appears.}}</p>
+  <p>{{An everyday analogy that makes the idea click.}}</p>
+
+  <div class="w-ex1">
+  <div class="grid2">
+    <div class="card">
+      <div class="controls">
+        <button class="ex-run">▶ Run</button>
+        <button class="ex-step">Step</button>
+        <button class="secondary ex-reset">Reset</button>
+      </div>
+      <div class="viz" style="min-height:160px"><span class="caption">{{What the learner is looking at}}</span>
+        <div class="ex-row" style="display:flex;gap:10px;padding:46px 8px 26px;flex-wrap:wrap"></div>
+      </div>
+      <div class="status"></div>
+      <div class="log"></div>
+    </div>
+    <div class="code"></div>
+  </div>
+  </div>
+
+  <h3>{{A heading for the details}}</h3>
+  <table class="cx">
+    <thead><tr><th>{{Column}}</th><th>{{Column}}</th><th>{{Column}}</th></tr></thead>
+    <tbody>
+      <tr><td><b>{{Row}}</b></td><td>{{…}}</td><td>{{…}}</td></tr>
+    </tbody>
+  </table>
+  <div class="callout tip">{{A short tip, practical rule of thumb, or "in practice" note.}}</div>
+
+  <h3>Where it shows up</h3>
+  <ul>
+    <li>{{A real-world use}}</li>
+    <li>{{Another real-world use}}</li>
+  </ul>
+  <div class="quizbox"></div>
+</section>
+<script>
+(() => {
+  // EXAMPLE DEMO: find the largest number, one comparison at a time.
+  // It shows the standard demo pattern: DS.code panel + DS.run (disables buttons while busy) +
+  // DS.wait (respects the speed slider) + colour-key node states + status line + log + Step/Reset.
+  const root = document.querySelector("#lesson1 .w-ex1");
+  const $ = s => root.querySelector(s);
+  const cp = DS.code($(".code"), `numbers = [7, 3, 9, 4, 6]
+best = numbers[0]          # start with the first value
+for n in numbers[1:]:
+    if n > best:           # compare with the best so far
+        best = n           # remember the new largest
+print(best)                # -> 9`, "largest.py");
+  const NUMS = [7, 3, 9, 4, 6];
+  const say = h => ($(".status").innerHTML = h);
+  let nodes = [], i, best;
+  function reset() {
+    i = 1; best = 0; cp.clear(); $(".log").innerHTML = "";
+    const row = $(".ex-row"); row.innerHTML = "";
+    nodes = NUMS.map(v => { const n = DS.el("span", { class: "node" }, String(v)); row.append(n); return n; });
+    say("Press <b>Run</b> to watch every step, or <b>Step</b> to go one comparison at a time.");
+  }
+  async function start() {
+    nodes[0].className = "node found"; cp.hl(2);
+    say("Start: the first value, <b>7</b>, is the largest so far.");
+    DS.log($(".log"), "best = 7", "info");
+  }
+  async function step() {
+    if (i === 1 && !nodes[0].classList.contains("found")) { await start(); return; }
+    if (i >= NUMS.length) { cp.hl(6); say(`Done: the largest number is <b>${NUMS[best]}</b>. ✓`); return; }
+    nodes.forEach(n => n.classList.remove("active"));
+    nodes[i].classList.add("active"); cp.hl(3, 4);
+    say(`Compare <b>${NUMS[i]}</b> with the best so far, <b>${NUMS[best]}</b>.`);
+    await DS.wait(0.8);
+    if (NUMS[i] > NUMS[best]) {
+      nodes[best].className = "node visited"; best = i; nodes[i].className = "node found"; cp.hl(5);
+      say(`${NUMS[i]} is bigger, so it becomes the new best.`); DS.log($(".log"), `best = ${NUMS[i]}`, "ok");
+    } else {
+      nodes[i].className = "node visited";
+      say(`${NUMS[i]} is not bigger, so the best stays ${NUMS[best]}.`); DS.log($(".log"), `${NUMS[i]} ≤ ${NUMS[best]}`, "");
+    }
+    i++;
+  }
+  async function runAll() {
+    reset(); await start(); await DS.wait(0.8);
+    while (i < NUMS.length) { await step(); await DS.wait(0.6); }
+    await step(); // the final "Done" message
+  }
+  $(".ex-run").onclick = () => DS.run(root, runAll);
+  $(".ex-step").onclick = () => DS.run(root, step);
+  $(".ex-reset").onclick = () => { if (!root.dataset.busy) reset(); };
+  reset();
+
+  DS.quiz(document.querySelector("#lesson1 .quizbox"), [
+    { q: "{{Question 1: tests a main idea from this lesson}}", options: ["{{right answer}}", "{{plausible wrong}}", "{{plausible wrong}}", "{{plausible wrong}}"], answer: 0,
+      why: "{{Why the right answer is right, in one sentence.}}" },
+    { q: "{{Question 2}}", options: ["{{…}}", "{{…}}", "{{…}}", "{{…}}"], answer: 1, why: "{{…}}" },
+    { q: "{{Question 3}}", options: ["{{…}}", "{{…}}", "{{…}}", "{{…}}"], answer: 2, why: "{{…}}" },
+  ]);
+})();
+</script>
+
+<!-- ===================================================================== glossary -->
+<section class="section" id="glossary" data-title="{{GLOSSARY_TITLE, e.g. Glossary or Cheat sheet}}">
+  <h2>{{GLOSSARY_TITLE}}</h2>
+  <p class="lead">The key terms from the course on one page. Filter by topic to revise before the final quiz.</p>
+  <style>#glossary [data-col][aria-pressed="true"] { background: var(--surface-2); color: var(--text); border-color: var(--accent); box-shadow: inset 0 -2px 0 var(--accent); }</style>
+  <div class="controls gl-filters" role="group" aria-label="Filter by topic"></div>
+  <div style="overflow-x:auto"><table class="cx" id="glTable"></table></div>
+</section>
+<script>
+(() => {
+  // [topic (filter button), link to the lesson, term, short plain meaning]. One row per key term, in course order.
+  const rows = [
+    ["{{Topic}}", "#lesson1", "{{Term}}", "{{short plain meaning}}"],
+  ];
+  const topics = ["All", ...new Set(rows.map(r => r[0]))];
+  const filters = document.querySelector("#glossary .gl-filters");
+  const table = document.getElementById("glTable");
+  let only = "All";
+  function render() {
+    table.innerHTML = "";
+    table.append(DS.el("thead", {}, DS.el("tr", {}, DS.el("th", {}, "Topic"), DS.el("th", {}, "Term"), DS.el("th", {}, "Meaning"))));
+    table.append(DS.el("tbody", {}, ...rows.filter(r => only === "All" || r[0] === only).map(([t, href, term, what]) =>
+      DS.el("tr", {}, DS.el("td", {}, DS.el("a", { href }, t)), DS.el("td", {}, DS.el("b", {}, term)), DS.el("td", {}, what)))));
+  }
+  const btns = topics.map(t => {
+    const b = DS.el("button", { class: "secondary always", "data-col": t, "aria-pressed": String(t === "All") }, t === "All" ? "All topics" : t);
+    b.onclick = () => { only = t; btns.forEach(x => x.setAttribute("aria-pressed", String(x === b))); render(); };
+    filters.append(b);
+    return b;
+  });
+  render();
+})();
+</script>
+<section class="section" id="finalquiz" data-title="Final quiz & certificate">
+  <h2>Final quiz &amp; certificate</h2>
+  <p class="lead">This is the last step of the course: one list of {{N_FINAL_QS}} questions on the main concepts of every lesson. After each answer you'll see the correct option and why it's right. Score 80% or more ({{PASS_COUNT}} of {{N_FINAL_QS}}) to earn a certificate with your name.</p>
+  <style>
+    #finalquiz .fq-progress { font-weight: 600; margin: 4px 0 12px; }
+    #finalquiz .fq-result { margin: 8px 0 0; }
+    #finalquiz .fq-result .controls { margin-top: 10px; }
+    #finalquiz .cert { margin: 18px auto 0; max-width: 760px; text-align: center; background: var(--surface);
+      border: 3px double var(--accent); outline: 1px solid var(--border); outline-offset: 6px;
+      border-radius: 6px; padding: 36px 28px; }
+    #finalquiz .cert .c-kicker { font-size: .8rem; letter-spacing: .2em; text-transform: uppercase; color: var(--text-2); }
+    #finalquiz .cert .c-title { font-size: 1.9rem; font-weight: 700; margin: 6px 0 18px; }
+    #finalquiz .cert .c-name { font-size: 2.1rem; font-weight: 700; color: var(--accent); margin: 10px auto 6px;
+      padding: 0 24px 6px; border-bottom: 1px solid var(--border); display: inline-block; max-width: 100%; overflow-wrap: anywhere; }
+    #finalquiz .cert .c-body { color: var(--text-2); margin: 10px 0; }
+    #finalquiz .cert .c-score { font-size: 1.15rem; font-weight: 600; margin: 14px 0 4px; }
+    #finalquiz .cert .c-levels { font-size: .9rem; color: var(--text-2); }
+    #finalquiz .cert .c-sign, #certPrint .c-sign { display: inline-flex; flex-direction: column; align-items: center; min-width: 200px; }
+    #finalquiz .cert .c-sig, #certPrint .c-sig { font: italic 400 1.9rem/1.1 "Segoe Script", "Brush Script MT", "Lucida Handwriting", "Apple Chancery", cursive;
+      padding: 0 10px 4px; border-bottom: 1px solid var(--border); align-self: stretch; text-align: center; }
+    #finalquiz .cert .c-sig { color: var(--accent); }
+    #finalquiz .cert .c-sigrole, #certPrint .c-sigrole { font-size: .85rem; margin-top: 6px; }
+    #finalquiz .cert .c-foot { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; text-align: left;
+      margin-top: 28px; font-size: .85rem; color: var(--text-2); }
+    #finalquiz .cert, #certPrint .cert { box-sizing: border-box; }
+    #certPrint { display: none; }
+    @media print {
+      html, body { background: white !important; color: black !important; }
+      body > *:not(#certPrint) { display: none !important; }
+      /* Same blue as the on-screen certificate (light-theme --accent); fixed so dark mode prints the same. */
+      #certPrint { display: block; padding: 24px; --cert-blue: #2a78d6; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      #certPrint .cert { text-align: center; max-width: 760px; margin: 0 auto; padding: 48px 32px; background: white; color: black;
+        border: 3px double var(--cert-blue); outline: 1px solid #c9d8ec; outline-offset: 6px; border-radius: 6px; font-family: var(--sans); }
+      #certPrint .c-kicker { font-size: .8rem; letter-spacing: .2em; text-transform: uppercase; color: #333; }
+      #certPrint .c-title { font-size: 1.9rem; font-weight: 700; margin: 6px 0 18px; }
+      #certPrint .c-name { font-size: 2.1rem; font-weight: 700; color: var(--cert-blue); margin: 10px auto 6px; padding: 0 24px 6px; border-bottom: 1px solid #c9d8ec; display: inline-block; }
+      #certPrint .c-body, #certPrint .c-levels, #certPrint .c-foot { color: #333; margin: 10px 0; }
+      #certPrint .c-score { font-size: 1.15rem; font-weight: 600; margin: 14px 0 4px; }
+      #certPrint .c-foot { display: flex; justify-content: space-between; align-items: baseline; margin-top: 28px; font-size: .85rem; text-align: left; }
+      #certPrint .c-sig { color: var(--cert-blue); border-bottom-color: #c9d8ec; }
+    }
+  </style>
+  <div id="finalQuizBox"></div>
+  <div class="card" id="certBox" aria-live="polite"></div>
+</section>
+
+<script>
+(() => {
+  /* ---------- final quiz: one list ---------- */
+  // 10-12 direct questions on the main concepts (no corner cases); one clearly correct answer each.
+  // Spread the correct answer index across positions 0-3.
+  const finalQs = [
+    { q: "{{Final question 1}}", options: ["{{right}}", "{{wrong}}", "{{wrong}}", "{{wrong}}"], answer: 0,
+      why: "{{one-sentence explanation}}" },
+    { q: "{{Final question 2}}", options: ["{{wrong}}", "{{right}}", "{{wrong}}", "{{wrong}}"], answer: 1,
+      why: "{{one-sentence explanation}}" },
+  ];
+  const fq = document.getElementById("finalQuizBox");
+  const certBox = document.getElementById("certBox");
+  const REPO = "https://github.com/{{GITHUB_USER}}/{{REPO_NAME}}";
+  const PASS = 0.8;
+  let result = { correct: 0, answered: 0, total: finalQs.length };
+  const totalQs = finalQs.length;
+  const needed = Math.ceil(PASS * totalQs);
+  let certName = "", showScore = true;
+  // The provider who signs every certificate: fixed, never taken from the learner's input.
+  const PROVIDER = "{{PROVIDER_NAME}}";
+
+  // Re-render the certificate panel from the current answers.
+  function renderCert() {
+    const { correct, answered } = result;
+    const pct = Math.round(100 * correct / totalQs);
+    certBox.innerHTML = "";
+    certBox.append(DS.el("h3", { style: { margin: "0 0 4px" } }, "🎓 Certificate"));
+    if (answered < totalQs) {
+      certBox.append(
+        DS.el("p", { class: "fq-progress" }, `${answered} of ${totalQs} questions answered · ${correct} correct so far`),
+        DS.el("p", { style: { margin: "0", color: "var(--text-2)" } },
+          `Answer all ${totalQs} questions. You need at least ${needed} correct (80%) to earn your certificate.`));
+      return;
+    }
+    if (correct < needed) {
+      certBox.append(DS.el("div", { class: "callout warn fq-result" },
+        DS.el("b", {}, `Not yet: you scored ${correct} / ${totalQs} (${pct}%).`),
+        ` You need ${needed} / ${totalQs} (80%) for the certificate, so ${needed - correct} more correct answer${needed - correct > 1 ? "s" : ""}. `,
+        "Read the explanations above, then press ", DS.el("b", {}, "Try again"), " to retake the quiz."));
+      return;
+    }
+    const nameIn = DS.el("input", { type: "text", maxlength: "60", placeholder: "Your full name", "aria-label": "Your name for the certificate", style: { minWidth: "220px" } });
+    nameIn.value = certName;
+    const err = DS.el("span", { style: { color: "var(--bad)", fontWeight: "600" } });
+    const scoreCb = DS.el("input", { type: "checkbox", style: { accentColor: "var(--accent)", margin: "0 6px 0 0" } });
+    scoreCb.checked = showScore;
+    // Toggling updates a certificate that is already on screen.
+    scoreCb.addEventListener("change", () => { showScore = scoreCb.checked; if (certName) showCert(certName, correct, pct); });
+    const make = () => {
+      const name = nameIn.value.trim().replace(/\s+/g, " ");
+      if (!name) { err.textContent = "Please enter your name first."; nameIn.focus(); return; }
+      certName = name; err.textContent = "";
+      showCert(name, correct, pct);
+    };
+    nameIn.addEventListener("keydown", e => { if (e.key === "Enter") make(); });
+    certBox.append(DS.el("div", { class: "callout tip fq-result" },
+      DS.el("b", {}, `✓ Passed! You scored ${correct} / ${totalQs} (${pct}%).`),
+      " Enter your name to get your certificate.",
+      DS.el("div", { class: "controls" }, nameIn, DS.el("button", { class: "always", onclick: make }, "Get my certificate"), err),
+      DS.el("label", { style: { display: "inline-flex", alignItems: "center", marginTop: "8px", cursor: "pointer" } },
+        scoreCb, "Show my score on the certificate")));
+    if (certName) showCert(certName, correct, pct);
+  }
+
+  function showCert(name, correct, pct) {
+    const old = certBox.querySelector(".cert-wrap");
+    if (old) old.remove();
+    const date = new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+    const cert = DS.el("div", { class: "cert", role: "img", "aria-label": `Certificate of completion for ${name}` },
+      DS.el("div", { class: "c-kicker" }, "Certificate of completion"),
+      DS.el("div", { class: "c-title" }, "{{COURSE_TITLE}}"),
+      DS.el("div", { class: "c-body" }, "This certifies that"),
+      DS.el("div", { class: "c-name" }, name),
+      DS.el("div", { class: "c-body" }, "has completed the self-paced course and passed its final quiz, covering {{CERT_TOPICS: a one-sentence list of what the course covers}}."),
+      showScore && DS.el("div", { class: "c-score" }, `Score: ${correct} / ${totalQs} (${pct}%)`),
+      DS.el("div", { class: "c-foot" },
+        DS.el("div", { class: "c-date" }, `Date: ${date}`),
+        DS.el("div", { class: "c-sign" },
+          DS.el("div", { class: "c-sig" }, PROVIDER),
+          DS.el("div", { class: "c-sigrole" }, "Course Provider"))));
+    const wrap = DS.el("div", { class: "cert-wrap" }, cert,
+      DS.el("div", { class: "controls", style: { justifyContent: "center", marginTop: "14px" } },
+        DS.el("button", { class: "always", onclick: () => printCert(cert) }, "Print / Save as PDF"),
+        DS.el("button", { class: "always", onclick: () => downloadCert(name, correct, pct, date) }, "Download as image")),
+      DS.el("p", { class: "cert-star", style: { textAlign: "center", margin: "14px 0 0", color: "var(--text-2)" } },
+        "🎉 Congratulations! If you enjoyed the course, ",
+        DS.el("a", { href: REPO, target: "_blank", rel: "noopener" }, "⭐ star it on GitHub"),
+        " and share it with others."));
+    certBox.append(wrap);
+  }
+
+  // Print only the certificate: copy it into a top-level element that the print CSS keeps visible.
+  function printCert(cert) {
+    let host = document.getElementById("certPrint");
+    if (!host) { host = DS.el("div", { id: "certPrint" }); document.body.append(host); }
+    host.innerHTML = "";
+    host.append(cert.cloneNode(true));
+    window.print();
+  }
+
+  // Draw the certificate onto a canvas (same look as the printed one) and save it as a PNG.
+  async function downloadCert(name, correct, pct, date) {
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    const W = 800, S = 2, BLUE = "#2a78d6", LINE = "#c9d8ec", GREY = "#333";
+    const SANS = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+    const SCRIPT = '"Segoe Script", "Brush Script MT", "Lucida Handwriting", "Apple Chancery", cursive';
+    const body = "has completed the self-paced course and passed its final quiz, covering {{CERT_TOPICS: a one-sentence list of what the course covers}}.";
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    // Lay out (and, when draw is true, paint) the certificate; returns its height.
+    function layout(draw) {
+      const text = (s, x, y, font, color, align = "center") => {
+        ctx.font = font; ctx.fillStyle = color; ctx.textAlign = align;
+        if (draw) ctx.fillText(s, x, y);
+        return ctx.measureText(s).width;
+      };
+      const line = (x1, y1, x2, y2, color) => {
+        if (!draw) return;
+        ctx.strokeStyle = color; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+      };
+      let y = 100;
+      // Spaced capitals, drawn letter by letter so every browser spaces them the same.
+      ctx.font = `13px ${SANS}`;
+      const kicker = "CERTIFICATE OF COMPLETION", gap = 2.6;
+      const kw = [...kicker].reduce((w, c) => w + ctx.measureText(c).width + gap, -gap);
+      let kx = (W - kw) / 2;
+      for (const c of kicker) { text(c, kx, y, `13px ${SANS}`, GREY, "left"); kx += ctx.measureText(c).width + gap; }
+      y += 50; text("{{COURSE_TITLE}}", W / 2, y, `700 30px ${SANS}`, "#000");
+      y += 52; text("This certifies that", W / 2, y, `16px ${SANS}`, GREY);
+      y += 52;
+      ctx.font = `700 34px ${SANS}`;
+      let shown = name;
+      while (ctx.measureText(shown).width > W - 140 && shown.length > 1) shown = shown.slice(0, -1);
+      if (shown !== name) shown = shown.trimEnd() + "…";
+      const nw = text(shown, W / 2, y, `700 34px ${SANS}`, BLUE);
+      y += 16; line(W / 2 - nw / 2 - 24, y, W / 2 + nw / 2 + 24, y, LINE);
+      ctx.font = `16px ${SANS}`;
+      const lines = [];
+      let cur = "";
+      for (const word of body.split(" ")) {
+        const next = cur ? cur + " " + word : word;
+        if (ctx.measureText(next).width > W - 100 && cur) { lines.push(cur); cur = word; } else cur = next;
+      }
+      lines.push(cur);
+      y += 18;
+      for (const l of lines) { y += 26; text(l, W / 2, y, `16px ${SANS}`, GREY); }
+      if (showScore) { y += 38; text(`Score: ${correct} / ${totalQs} (${pct}%)`, W / 2, y, `600 18px ${SANS}`, "#000"); }
+      y += 64;
+      text(`Date: ${date}`, 60, y + 4, `13.5px ${SANS}`, GREY, "left");
+      const sx = W - 170;
+      const sw = Math.max(200, text(PROVIDER, sx, y, `italic 30px ${SCRIPT}`, BLUE) + 20);
+      line(sx - sw / 2, y + 12, sx + sw / 2, y + 12, LINE);
+      text("Course Provider", sx, y + 34, `13.5px ${SANS}`, GREY);
+      const H = y + 80;
+      if (draw) {
+        // Thin outer frame, then the double blue border, as on the printed certificate.
+        ctx.strokeStyle = LINE; ctx.lineWidth = 1; ctx.beginPath(); ctx.roundRect(14.5, 14.5, W - 29, H - 29, 10); ctx.stroke();
+        ctx.strokeStyle = BLUE;
+        for (const i of [21.5, 24.5]) { ctx.beginPath(); ctx.roundRect(i, i, W - 2 * i, H - 2 * i, 6); ctx.stroke(); }
+      }
+      return H;
+    }
+
+    const H = layout(false);
+    canvas.width = W * S; canvas.height = H * S;
+    ctx.scale(S, S);
+    ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, W, H);
+    ctx.textBaseline = "alphabetic";
+    layout(true);
+
+    const slug = name.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-+|-+$/g, "") || "certificate";
+    canvas.toBlob(blob => {
+      const a = DS.el("a", { href: URL.createObjectURL(blob), download: `certificate-${slug}.png` });
+      document.body.append(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    }, "image/png");
+  }
+
+  const qBox = DS.el("div");
+  const reset = () => {
+    qBox.innerHTML = "";
+    result = { correct: 0, answered: 0, total: totalQs };
+    DS.quiz(qBox, finalQs, r => { result = r; renderCert(); });
+  };
+  fq.append(DS.el("div", { class: "card", style: { marginBottom: "16px" } },
+    DS.el("div", { style: { display: "flex", alignItems: "baseline", gap: "12px", flexWrap: "wrap" } },
+      DS.el("h3", { style: { margin: "0" } }, "Final quiz"),
+      DS.el("span", { style: { color: "var(--text-2)", flex: "1" } }, `${totalQs} questions covering every lesson.`),
+      DS.el("button", { class: "secondary always", onclick: reset }, "Try again")),
+    qBox));
+  reset();
+})();
+</script>
+
+<footer>{{COURSE_TITLE}} — a free, self-paced course by {{PROVIDER_NAME}}. {{One sentence about the code panels}} Single self-contained file; works offline.<br><a href="https://github.com/{{GITHUB_USER}}/{{REPO_NAME}}" target="_blank" rel="noopener">Source on GitHub</a> · ⭐ Star the repo if you found it useful.</footer>
+</main>
+</div>
+
+<script>
+/* Page sheets: build a chapter band and an end line for every section from its data-title */
+(() => {
+  const sections = [...document.querySelectorAll("main section[data-title]")];
+  const lessons = sections.filter(sec => /^\d+\.\s/.test(sec.dataset.title));
+  const total = lessons.length;
+  sections.forEach(sec => {
+    if (sec.classList.contains("hero")) return;
+    const h2 = sec.querySelector(":scope > h2");
+    if (!h2) return;
+    const m = sec.dataset.title.match(/^(\d+)\.\s/);
+    let part = null;
+    for (let el = sec.previousElementSibling; el; el = el.previousElementSibling) {
+      if (el.classList.contains("part")) { part = el.querySelector("h2")?.textContent.trim(); break; }
+    }
+    const band = document.createElement("div");
+    band.className = "band";
+    const kicker = document.createElement("div");
+    kicker.className = "band-k";
+    if (m) {
+      const num = document.createElement("div");
+      num.className = "band-n"; num.textContent = m[1]; num.setAttribute("aria-hidden", "true");
+      band.append(num);
+      kicker.textContent = (part ? part + " · " : "") + `Lesson ${m[1]} of ${total}`;
+      const t = h2.firstChild;   // drop the "4. " already shown as the big number
+      if (t && t.nodeType === 3) t.textContent = t.textContent.replace(/^\d+\.\s*/, "");
+    } else {
+      const before = lessons.length && sections.indexOf(sec) < sections.indexOf(lessons[0]);
+      kicker.textContent = sec.id === "finalquiz" ? "Last step" : before ? "Before you start" : "After the lessons";
+    }
+    const text = document.createElement("div");
+    text.append(kicker);
+    h2.replaceWith(band);
+    text.append(h2);
+    band.append(text);
+    const end = document.createElement("div");
+    end.className = "endline";
+    end.textContent = m ? `End of lesson ${m[1]} of ${total}` : sec.id === "finalquiz" ? "End of the course" : "End of this section";
+    sec.append(end);
+  });
+})();
+</script>
+<script>
+/* Build the sidebar from every section that has a data-title, and track the current one. */
+(() => {
+  const nav = document.getElementById("nav");
+  const sections = [...document.querySelectorAll("section[data-title]")];
+  const links = sections.map(s => {
+    const a = DS.el("a", { href: "#" + s.id }, s.dataset.title);
+    nav.append(a);
+    return a;
+  });
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(en => {
+      if (en.isIntersecting) {
+        links.forEach(l => {
+          const on = l.getAttribute("href") === "#" + en.target.id;
+          l.classList.toggle("current", on);
+          // In the narrow-screen chip bar, keep the current chip visible (horizontal scroll only).
+          if (on && nav.scrollWidth > nav.clientWidth) {
+            const left = l.offsetLeft - (nav.clientWidth - l.offsetWidth) / 2;
+            nav.scrollTo({ left: Math.max(0, left), behavior: DS.reducedMotion() ? "auto" : "smooth" });
+          }
+        });
+      }
+    });
+  }, { rootMargin: "-40% 0px -55% 0px" });
+  sections.forEach(s => io.observe(s));
+})();
+</script>
+</body>
+</html>
