@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Explainer slide</title>
+<!--
+  Explainer slide template — fixed 1600x900 canvas, rendered to PNG with headless Chrome/Edge.
+  Replace every TODO. Keep all numbers in F (the fact sheet) and reference them with data-f.
+-->
+<style>
+  :root{
+    --ink:#1F2328; --muted:#5F6670; --paper:#FAFAF7; --card:#FFFFFF; --line:#D0D4D9;
+    --good:#2E8B57; --bad:#C0392B; --neutral:#9AA0A6; --why:#FFF6DB; --why-edge:#E8C766;
+    --c1:#3B6FB6; --c2:#C0504D; --c3:#7A5BA6; --c4:#D08A1E; --c5:#2E8B57;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{width:1600px;height:900px;overflow:hidden;background:var(--paper);color:var(--ink);
+       font-family:Inter,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.3}
+  header{height:96px;text-align:center;padding-top:14px}
+  header h1{font-size:30px;font-weight:800}
+  header p{font-size:21px;color:var(--muted);margin-top:4px}
+  main{display:grid;grid-template-columns:240px 270px minmax(0,1fr) 270px 280px;gap:10px;padding:0 12px;height:676px}
+  .card{background:var(--card);border:2px solid var(--a);border-radius:10px;padding:10px 12px;
+        display:flex;flex-direction:column;gap:6px;min-height:0;overflow:hidden}
+  .head{display:flex;gap:8px;align-items:flex-start}
+  .num{background:var(--a);color:#fff;font-weight:800;font-size:22px;width:34px;height:34px;
+       border-radius:7px;display:flex;align-items:center;justify-content:center;flex:none}
+  .title{color:var(--a);font-weight:800;font-size:16px}
+  .take{font-weight:800;font-size:15px}
+  .data{font-style:italic;color:var(--muted);font-size:13px}
+  .fig{flex:1;min-height:0;display:flex;flex-direction:column;gap:6px}
+  .foot{color:var(--muted);font-size:13px}
+  .steps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:8px;flex:1;min-height:0}
+  .step{border:1.5px solid var(--a);border-radius:8px;background:#FBFCFD;padding:6px 8px;
+        display:flex;flex-direction:column;gap:4px;min-height:0}
+  .what{font-weight:800;font-size:14px}
+  .what b{color:var(--a);font-size:17px;margin-right:4px}
+  .pic{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;gap:10px}
+  .pic svg{flex:none}
+  .whybox{background:var(--why);border:1px solid var(--why-edge);border-radius:6px;padding:5px 8px;font-size:13px;height:64px}
+  .whybox::before{content:"WHY? ";font-weight:800;color:#9A6B00}
+  .legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:13px}
+  .legend i{display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+  .group{border:1.5px solid var(--a);border-radius:6px;padding:4px 6px;background:#fff}
+  .banner{margin:10px 12px 0;border-radius:10px;padding:10px 16px;text-align:center;font-weight:800;font-size:17px}
+  .concl{background:#E6F4EA;border:2px solid var(--good)}
+  .lesson{background:#EEF1F6;border:2px solid var(--c1);margin-top:8px}
+  .overflow{outline:3px solid red !important}
+</style>
+</head>
+<body>
+<script>
+  // FACT SHEET — every number on the slide comes from here (source mode: cite page/table in comments).
+  const F = {
+    total: 128, idle: 36,            // TODO
+    acc_before: "96.74%", acc_after: "96.99%", fixed: 34, broken: 9,   // TODO
+  };
+</script>
+
+<header>
+  <h1>TODO surprising fact with <span data-f="idle"></span> of <span data-f="total"></span>.</h1>
+  <p>TODO the action taken.</p>
+</header>
+
+<main>
+  <section class="card" style="--a:var(--c1)">
+    <div class="head"><div class="num">1</div><div class="title">TODO What did we notice?</div></div>
+    <div class="take">TODO one-sentence answer.</div>
+    <div class="data">Data: TODO which data — and why that data.</div>
+    <div class="fig"><!-- TODO inline SVG chart --></div>
+    <div class="legend"><span><i style="background:var(--neutral)"></i>TODO</span><span><i style="background:var(--bad)"></i>TODO</span></div>
+  </section>
+
+  <section class="card" style="--a:var(--c2)">
+    <div class="head"><div class="num">2</div><div class="title">TODO What is wrong?</div></div>
+    <div class="take">TODO measured problem.</div>
+    <div class="data">Data: TODO</div>
+    <div class="fig">
+      <div class="group"><b>Problem A:</b> TODO → fixed by <b>Fix A</b></div>
+      <div class="group"><b>Problem B:</b> TODO → fixed by <b>Fix B</b></div>
+      <div class="foot"><b>Not targeted:</b> TODO item, because TODO reason.</div>
+    </div>
+  </section>
+
+  <section class="card" style="--a:var(--c3)">
+    <div class="head"><div class="num">3</div><div class="title">TODO How does one fix work?</div></div>
+    <div class="take">TODO the method in one sentence.</div>
+    <div class="steps">
+      <div class="step"><div class="what"><b>1</b>TODO concrete action: what is compared with what</div><div class="pic"><!-- real example --></div><div class="whybox">TODO reason</div></div>
+      <div class="step"><div class="what"><b>2</b>TODO</div><div class="pic"></div><div class="whybox">TODO</div></div>
+      <div class="step"><div class="what"><b>3</b>TODO</div><div class="pic"></div><div class="whybox">TODO</div></div>
+      <div class="step"><div class="what"><b>4</b>TODO</div>
+        <div class="pic">
+          <!-- before -> after mechanism: two score panels and an arrow -->
+          <svg width="140" height="92" viewBox="0 0 150 92" font-size="12">
+            <text x="0" y="14">3</text><rect x="14" y="4" width="110" height="14" fill="var(--bad)"/>
+            <text x="0" y="34">8</text><rect x="14" y="24" width="80" height="14" fill="var(--neutral)"/>
+            <text x="0" y="54">5</text><rect x="14" y="44" width="20" height="14" fill="var(--neutral)"/>
+            <text x="70" y="80" text-anchor="middle" fill="var(--bad)" font-weight="800">before: predicts 3 ✗</text>
+          </svg>
+          <div style="text-align:center;font-size:12px;color:var(--muted)">TODO note<br><span style="font-size:24px">→</span></div>
+          <svg width="140" height="92" viewBox="0 0 150 92" font-size="12">
+            <text x="0" y="14">3</text><rect x="14" y="4" width="45" height="14" fill="var(--neutral)"/>
+            <text x="0" y="34">8</text><rect x="14" y="24" width="80" height="14" fill="var(--good)"/>
+            <text x="0" y="54">5</text><rect x="14" y="44" width="20" height="14" fill="var(--neutral)"/>
+            <text x="70" y="80" text-anchor="middle" fill="var(--good)" font-weight="800">after: predicts 8 ✓</text>
+          </svg>
+        </div>
+        <div class="whybox">TODO why it works, and what it does NOT affect</div></div>
+    </div>
+    <div class="foot">Example: TODO. Same recipe for all TODO cases. TODO simplification note.</div>
+  </section>
+
+  <section class="card" style="--a:var(--c4)">
+    <div class="head"><div class="num">4</div><div class="title">TODO Where do the numbers come from?</div></div>
+    <div class="take">TODO a + b = total of N.</div>
+    <div class="fig"><!-- TODO count chart + example chain "21 → 3 → 3" + rules/thresholds --></div>
+  </section>
+
+  <section class="card" style="--a:var(--c5)">
+    <div class="head"><div class="num">5</div><div class="title">TODO Did it work on new data?</div></div>
+    <div class="take"><span data-f="acc_before"></span> → <span data-f="acc_after"></span> (<span data-f="fixed"></span> fixed, <span data-f="broken"></span> broken)</div>
+    <div class="data">Data: TODO never used to build the method.</div>
+    <div class="fig"><!-- TODO after − before chart + "why each changed" list --></div>
+  </section>
+</main>
+
+<div class="banner concl">Conclusion: TODO what was shown, with its size and limits.</div>
+<div class="banner lesson">Lesson: TODO what carries over to other problems.</div>
+
+<script>
+  document.querySelectorAll("[data-f]").forEach(el => {
+    const k = el.dataset.f;
+    el.textContent = (k in F) ? F[k] : "⚠" + k;   // a ⚠ in the render means a missing fact
+  });
+  function checkOverflow(){
+    document.querySelectorAll(".card,.step,.whybox,.banner,header").forEach(el => {
+      if (el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1) el.classList.add("overflow");
+    });
+  }
+  checkOverflow();  // red outline = content does not fit; fix before delivering
+</script>
+</body>
+</html>
